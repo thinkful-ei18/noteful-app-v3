@@ -4,11 +4,10 @@ env:
 - NODE_ENV=test
 services:
 - mongodb
-deploy:
-  provider: heroku
-  api_key:
-    secure: UN2agUdNRNCFVnyMoF9yCAiXDT1NTFD263bb0OnazONSN6tmOyslm2are7LEdffDl9huzyzLTQxTQ6qx/AeBQYXpN4uWwEjlPnwHw0HTWnk7oebAvXQ3+S7Rxa4ns1dQGHtfmJ1xTm6oUBXHAWyiiW2IlepqLuLSBYU/7uTieo+voaU43nLfZ6j7PffrMYN63X/26Z+ZqpBRXcxL/IefZGyqV8aHH61pcPzyKdk53WhImQQEdajjniTcRg+Yu/4im4gldfVE90ar5YQYS9MQiqojOAwnL6CryN32P/2n7XvDFDzXrojbd/JO7bZBv7qngrk20ps4w20MvXR4VykBlL9IZD/3tddEHdJOP+fMU0ukknA+DT4GKehMhXcHDRr27MwNiGscPQPBLHz1ycWolmAIWeVQxl4LpO/7EpzLDOoYOeH61G3ExL0E0tVlUoY6Xv9VRl+BsbdMSksDj1vNgASNz9JY24NIVKjiwzTburvGEY1nHL4zmE6wcYlnSE7cjrI37VEu2M6BAQ0P3Oj4VfFpBhnFf5IEGphQ2LgBS3pBrDvGEpoutw/1REffrgHEqTT7FGUYtB0sC1RoyeF4s9MBIOx2tz6pBnK8gtHH/ZvOj0NPoGTJYVmAd1+zTuhORsoI6SA84AIy3vxH8XIWAH91DB4F2E0Aex9LUMngELk=
-  app: noteful-v3
-  on:
-    repo: cklanac/noteful-app-v3
-    branch: solution/3-testing
+# deploy:
+#     provider: heroku
+#     api_key:
+#       secure: [YOUR-API-KEY]
+#     app: [YOUR-APP-NAME]
+#     on:
+#       repo: [YOUR-APP-REPO]

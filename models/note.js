@@ -6,6 +6,7 @@ const noteSchema = new mongoose.Schema({
   title: { type: String, index: true },
   content: { type: String, index: true },
   created: { type: Date, default: Date.now },
+  folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder' }
 });
 
 noteSchema.index({ title: 'text', content: 'text' });

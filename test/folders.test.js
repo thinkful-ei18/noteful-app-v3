@@ -7,9 +7,7 @@ const mongoose = require('mongoose');
 
 const { TEST_MONGODB_URI } = require('../config');
 
-const Note = require('../models/note');
 const Folder = require('../models/folder');
-const seedNotes = require('../db/seed/notes');
 const seedFolders = require('../db/seed/folders');
 
 
@@ -18,16 +16,14 @@ const expect = chai.expect;
 chai.use(chaiHttp);
 chai.use(chaiSpies);
 
-describe('Noteful API - Notes', function () {
+describe('Noteful API - Folders', function () {
   before(function () {
     return mongoose.connect(TEST_MONGODB_URI);
   });
 
   beforeEach(function () {
-    const noteInsertPromise = Note.insertMany(seedNotes);
-    const folderInsertPromise = Folder.insertMany(seedFolders);
-    return Promise.all([noteInsertPromise, folderInsertPromise])
-      .then(() => Note.createIndexes());
+    return Folder.insertMany(seedFolders)
+      .then(() => Folder.createIndexes());
   });
 
   afterEach(function () {
@@ -38,11 +34,11 @@ describe('Noteful API - Notes', function () {
     return mongoose.disconnect();
   });
 
-  describe('GET /v3/notes', function () {
+  describe('GET /v3/folders', function () {
 
-    it('should return the correct number of Notes', function () {
-      const dbPromise = Note.find();
-      const apiPromise = chai.request(app).get('/v3/notes');
+    it('should return the correct number of folders', function () {
+      const dbPromise = Folder.find();
+      const apiPromise = chai.request(app).get('/v3/folders');
 
       return Promise.all([dbPromise, apiPromise])
         .then(([data, res]) => {
@@ -54,8 +50,8 @@ describe('Noteful API - Notes', function () {
     });
 
     it('should return a list with the correct right fields', function () {
-      const dbPromise = Note.find();
-      const apiPromise = chai.request(app).get('/v3/notes');
+      const dbPromise = Folder.find();
+      const apiPromise = chai.request(app).get('/v3/folders');
 
       return Promise.all([dbPromise, apiPromise])
         .then(([data, res]) => {
@@ -65,81 +61,31 @@ describe('Noteful API - Notes', function () {
           expect(res.body).to.have.length(data.length);
           res.body.forEach(function (item) {
             expect(item).to.be.a('object');
-            expect(item).to.have.keys('id', 'title', 'content', 'created', 'folderId');
+            expect(item).to.have.keys('id', 'name');
           });
-        });
-    });
-
-    it('should return correct search results for a searchTerm query', function () {
-      const term = 'gaga';
-      const dbPromise = Note.find(
-        { $text: { $search: term } },
-        { score: { $meta: 'textScore' } })
-        .sort({ score: { $meta: 'textScore' } });
-      const apiPromise = chai.request(app).get(`/v3/notes?searchTerm=${term}`);
-
-      return Promise.all([dbPromise, apiPromise])
-        .then(([data, res]) => {
-          expect(res).to.have.status(200);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('array');
-          expect(res.body).to.have.length(1);
-          expect(res.body[0]).to.be.an('object');
-          expect(res.body[0].id).to.equal(data[0].id);
-        });
-    });
-
-    it('should return correct search results for a searchTerm query', function () {
-      let data;
-      return Folder.findOne().select('id name')
-        .then((_data) => {
-          data = _data;
-          const dbPromise = Note.find({ folderId: data.id });
-          const apiPromise = chai.request(app).get(`/v3/notes?folderId=${data.id}`);
-          return Promise.all([dbPromise, apiPromise]);
-        })
-        .then(([data, res]) => {
-          expect(res).to.have.status(200);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('array');
-          expect(res.body).to.have.length(data.length);
-        });
-    });
-
-    it('should return an empty array for an incorrect query', function () {
-      const dbPromise = Note.find({ title: { $regex: /NotValid/i } });
-      const apiPromise = chai.request(app).get('/v3/notes?searchTerm=NotValid');
-
-      return Promise.all([dbPromise, apiPromise])
-        .then(([data, res]) => {
-          expect(res).to.have.status(200);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('array');
-          expect(res.body).to.have.length(data.length);
         });
     });
 
   });
 
-  describe('GET /v3/notes/:id', function () {
+  describe('GET /v3/folders/:id', function () {
 
     it('should return correct notes', function () {
       let data;
-      return Note.findOne().select('id title content')
+      return Folder.findOne().select('id name')
         .then(_data => {
           data = _data;
-          return chai.request(app).get(`/v3/notes/${data.id}`);
+          return chai.request(app).get(`/v3/folders/${data.id}`);
         })
         .then((res) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'title', 'content', 'created', 'folderId');
+          expect(res.body).to.have.keys('id', 'name');
 
           expect(res.body.id).to.equal(data.id);
-          expect(res.body.title).to.equal(data.title);
-          expect(res.body.content).to.equal(data.content);
+          expect(res.body.name).to.equal(data.name);
         });
     });
 
@@ -147,7 +93,7 @@ describe('Noteful API - Notes', function () {
       const badId = '99-99-99';
       const spy = chai.spy();
       return chai.request(app)
-        .get(`/v3/notes/${badId}`)
+        .get(`/v3/folders/${badId}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -162,7 +108,7 @@ describe('Noteful API - Notes', function () {
     it('should respond with a 404 for an invalid id', function () {
       const spy = chai.spy();
       return chai.request(app)
-        .get('/v3/notes/AAAAAAAAAAAAAAAAAAAAAAAA')
+        .get('/v3/folders/AAAAAAAAAAAAAAAAAAAAAAAA')
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -174,16 +120,15 @@ describe('Noteful API - Notes', function () {
 
   });
 
-  describe('POST /v3/notes', function () {
+  describe('POST /v3/folders', function () {
 
     it('should create and return a new item when provided valid data', function () {
       const newItem = {
-        'title': 'The best article about cats ever!',
-        'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...'
+        'name': 'Ready',
       };
       let body;
       return chai.request(app)
-        .post('/v3/notes')
+        .post('/v3/folders')
         .send(newItem)
         .then(function (res) {
           body = res.body;
@@ -191,75 +136,92 @@ describe('Noteful API - Notes', function () {
           expect(res).to.have.header('location');
           expect(res).to.be.json;
           expect(body).to.be.a('object');
-          expect(body).to.include.keys('id', 'title', 'content');
-          return Note.findById(body.id);
+          expect(body).to.include.keys('id', 'name');
+          return Folder.findById(body.id);
         })
         .then(data => {
-          expect(body.title).to.equal(data.title);
-          expect(body.content).to.equal(data.content);
+          expect(body.name).to.equal(data.name);
         });
     });
 
-    it('should return an error when missing "title" field', function () {
+    it('should return an error when missing "name" field', function () {
       const newItem = {
         'foo': 'bar'
       };
       const spy = chai.spy();
       return chai.request(app)
-        .post('/v3/notes')
+        .post('/v3/folders')
         .send(newItem)
         .then(spy)
-        .then(() => {
-          expect(spy).to.not.have.been.called();
-        })
         .catch(err => {
           const res = err.response;
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Missing `title` in request body');
+          expect(res.body.message).to.equal('Missing `name` in request body');
+        })
+        .then(() => {
+          expect(spy).to.not.have.been.called();
+        });
+    });
+
+    it('should return an error when given a duplicate name', function () {
+      const newItem = {
+        'name': 'Personal'
+      };
+      const spy = chai.spy();
+      return chai.request(app)
+        .post('/v3/folders')
+        .send(newItem)
+        .then(spy)
+        .catch(err => {          
+          const res = err.response;
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('The folder name already exists');
+        })
+        .then(() => {
+          expect(spy).to.not.have.been.called();
         });
     });
 
   });
 
-  describe('PUT /v3/notes/:id', function () {
+  describe('PUT /v3/folders/:id', function () {
 
-    it('should update the note', function () {
+    it('should update the folder', function () {
       const updateItem = {
-        'title': 'What about dogs?!',
-        'content': 'woof woof'
+        'name': 'Stuff'
       };
       let data;
-      return Note.findOne().select('id title content')
+      return Folder.findOne().select('id name')
         .then(_data => {
           data = _data;
           return chai.request(app)
-            .put(`/v3/notes/${data.id}`)
+            .put(`/v3/folders/${data.id}`)
             .send(updateItem);
         })
         .then(function (res) {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.include.keys('id', 'title', 'content');
+          expect(res.body).to.include.keys('id', 'name');
 
           expect(res.body.id).to.equal(data.id);
-          expect(res.body.title).to.equal(updateItem.title);
-          expect(res.body.content).to.equal(updateItem.content);
+          expect(res.body.name).to.equal(updateItem.name);
         });
     });
 
 
     it('should respond with a 400 for improperly formatted id', function () {
       const updateItem = {
-        'title': 'What about dogs?!',
-        'content': 'woof woof'
+        'name': 'What about dogs?!'
       };
       const badId = '99-99-99';
       const spy = chai.spy();
       return chai.request(app)
-        .put(`/v3/notes/${badId}`)
+        .put(`/v3/folders/${badId}`)
         .send(updateItem)
         .then(spy)
         .then(() => {
@@ -274,12 +236,11 @@ describe('Noteful API - Notes', function () {
 
     it('should respond with a 404 for an invalid id', function () {
       const updateItem = {
-        'title': 'What about dogs?!',
-        'content': 'woof woof'
+        'name': 'What about dogs?!'
       };
       const spy = chai.spy();
       return chai.request(app)
-        .put('/v3/notes/AAAAAAAAAAAAAAAAAAAAAAAA')
+        .put('/v3/folders/AAAAAAAAAAAAAAAAAAAAAAAA')
         .send(updateItem)
         .then(spy)
         .then(() => {
@@ -290,13 +251,13 @@ describe('Noteful API - Notes', function () {
         });
     });
 
-    it('should return an error when missing "title" field', function () {
+    it('should return an error when missing "name" field', function () {
       const updateItem = {
         'foo': 'bar'
       };
       const spy = chai.spy();
       return chai.request(app)
-        .put('/v3/notes/9999')
+        .put('/v3/folders/9999')
         .send(updateItem)
         .then(spy)
         .then(() => {
@@ -307,20 +268,46 @@ describe('Noteful API - Notes', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Missing `title` in request body');
+          expect(res.body.message).to.equal('Missing `name` in request body');
+        });
+    });
+
+    it('should return an error when given a duplicate name', function () {
+      const updateItem = {
+        'name': 'Personal'
+      };
+      const spy = chai.spy();
+      let data;
+      return Folder.findOne().select('id name')
+        .then(_data => {
+          data = _data;
+          return chai.request(app)
+            .put(`/v3/folders/${data.id}`)
+            .send(updateItem);
+        })
+        .then(spy)
+        .catch(err => {          
+          const res = err.response;
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('The folder name already exists');
+        })
+        .then(() => {
+          expect(spy).to.not.have.been.called();
         });
     });
 
   });
 
-  describe('DELETE  /v3/notes/:id', function () {
+  describe('DELETE /v3/folders/:id', function () {
 
     it('should delete an item by id', function () {
       let data;
-      return Note.findOne().select('id title content')
+      return Folder.findOne().select('id name')
         .then(_data => {
           data = _data;
-          return chai.request(app).delete(`/v3/notes/${data.id}`);
+          return chai.request(app).delete(`/v3/folders/${data.id}`);
         })
         .then(function (res) {
           expect(res).to.have.status(204);
@@ -330,7 +317,7 @@ describe('Noteful API - Notes', function () {
     it('should respond with a 404 for an invalid id', function () {
       const spy = chai.spy();
       return chai.request(app)
-        .delete('/v3/notes/AAAAAAAAAAAAAAAAAAAAAAAA')
+        .delete('/v3/folders/AAAAAAAAAAAAAAAAAAAAAAAA')
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();

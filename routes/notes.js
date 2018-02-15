@@ -9,21 +9,28 @@ const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/notes', (req, res, next) => {
-  const { searchTerm } = req.query;
+  const { searchTerm, folderId } = req.query;
 
   let filter = {};
   let projection = {};
   let sort = 'created'; // default sorting
-
+  
+  // if querying by searchTerm, then add to filter
   if (searchTerm) {
     filter.$text = { $search: searchTerm };
     projection.score = { $meta: 'textScore' };
     sort = projection;
   }
 
+  // if querying by folder, then add to filter
+  if (folderId) {
+    filter.folderId = folderId;
+  }
+
   Note.find(filter, projection)
-    .select('title content created')
+    .select('title content created folderId')
     .sort(sort)
+    // .populate('folderId')
     .then(results => {
       res.json(results);
     })
@@ -41,7 +48,8 @@ router.get('/notes/:id', (req, res, next) => {
   }
 
   Note.findById(id)
-    .select('id title content')
+    .select('title content created folderId')
+    // .populate('folderId')
     .then(result => {
       if (result) {
         res.json(result);
@@ -54,7 +62,7 @@ router.get('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const { title, content } = req.body;
+  const { title, content, folderId } = req.body;
   
   /***** Never trust users - validate input *****/
   if (!title) {
@@ -63,7 +71,7 @@ router.post('/notes', (req, res, next) => {
     return next(err);
   }
   
-  const newItem = { title, content };
+  const newItem = { title, content, folderId };
 
   Note.create(newItem)
     .then(result => {
@@ -75,7 +83,7 @@ router.post('/notes', (req, res, next) => {
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const { id } = req.params;
-  const { title, content } = req.body;
+  const { title, content, folderId } = req.body;
 
   /***** Never trust users - validate input *****/
   if (!title) {
@@ -90,11 +98,11 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateItem = { title, content };
+  const updateItem = { title, content, folderId };
   const options = { new: true };
 
   Note.findByIdAndUpdate(id, updateItem, options)
-    .select('id title content')
+    .select('id title content folderId')
     .then(result => {
       if (result) {
         res.json(result);
