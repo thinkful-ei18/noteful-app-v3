@@ -89,7 +89,7 @@ describe('Noteful API - Notes', function () {
         });
     });
 
-    it('should return correct search results for a searchTerm query', function () {
+    it('should return correct search results for a folderId query', function () {
       let data;
       return Folder.findOne().select('id name')
         .then((_data) => {
