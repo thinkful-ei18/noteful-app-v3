@@ -8,25 +8,10 @@ const Note = require('../models/note');
 const seedNotes = require('../db/seed/notes');
 
 mongoose.connect(MONGODB_URI)
-  .then(() => {
-    return mongoose.connection.db.dropDatabase()
-      .then(result => {
-        console.info(`Dropped Database: ${result}`);
-      });
-  })
-  .then(() => {
-    return Note.insertMany(seedNotes)      
-      .then(results => {
-        console.info(`Inserted ${results.length} Notes`);
-      })
-      .then(() => Note.createIndexes());
-  })
-  .then(() => {
-    return mongoose.disconnect()
-      .then(() => {
-        console.info('Disconnected');
-      });
-  })
+  .then(() => mongoose.connection.db.dropDatabase())
+  .then(() => Note.insertMany(seedNotes))
+  .then(() => Note.createIndexes())
+  .then(() => mongoose.disconnect())
   .catch(err => {
     console.error(`ERROR: ${err.message}`);
     console.error(err);
