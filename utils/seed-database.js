@@ -10,36 +10,15 @@ const seedNotes = require('../db/seed/notes');
 const seedFolders = require('../db/seed/folders');
 
 mongoose.connect(MONGODB_URI)
+  .then(() => mongoose.connection.db.dropDatabase())
+  // .then(() => Note.insertMany(seedNotes))
   .then(() => {
-    return mongoose.connection.db.dropDatabase()
-      .then(result => {
-        console.info(`Dropped Database: ${result}`);
-      });
-  })
-  // .then(() => {
-  //   return Note.insertMany(seedNotes)
-  //     .then(results => {
-  //       console.info(`Inserted ${results.length} Notes`);
-  //     });
-  // })
-  .then(() => {
-    // Use Promise.all below, 'cause we can
     const noteInsertPromise = Note.insertMany(seedNotes);
     const folderInsertPromise = Folder.insertMany(seedFolders);
-
-    return Promise.all([noteInsertPromise, folderInsertPromise])
-      .then(([noteResults, folderResults]) => {
-        console.info(`Inserted ${noteResults.length} Notes`);
-        console.info(`Inserted ${folderResults.length} Folders`);
-      });
+    return Promise.all([noteInsertPromise, folderInsertPromise]);
   })
   .then(() => Note.createIndexes())
-  .then(() => {
-    return mongoose.disconnect()
-      .then(() => {
-        console.info('Disconnected');
-      });
-  })
+  .then(() => mongoose.disconnect())
   .catch(err => {
     console.error(`ERROR: ${err.message}`);
     console.error(err);
