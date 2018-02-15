@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 
 const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
 
 const Note = require('../models/note');
 
@@ -16,13 +15,13 @@ router.get('/notes', (req, res, next) => {
   let projection = {};
   let sort = 'created'; // default sorting
 
-  if (searchTerm) {
-    filter.$text = { $search: searchTerm };
-    projection.score = { $meta: 'textScore' };
-    sort = projection;
-  }
+  // if (searchTerm) {
+  //   filter.$text = { $search: searchTerm };
+  //   projection.score = { $meta: 'textScore' };
+  //   sort = projection;
+  // }
 
-  Note.find(filter, projection)
+  Note.find( {'title' : 'Lady Gaga....'} , projection)
     .select('title content created')
     .sort(sort)
     .then(results => {

@@ -1,7 +1,6 @@
 'use strict';
 
 const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
 
 const { MONGODB_URI } = require('../config');
 const Note = require('../models/note');
@@ -16,10 +15,11 @@ mongoose.connect(MONGODB_URI)
       });
   })
   .then(() => {
-    return Note.insertMany(seedNotes)
+    return Note.insertMany(seedNotes)      
       .then(results => {
         console.info(`Inserted ${results.length} Notes`);
-      });
+      })
+      .then(() => Note.createIndexes());
   })
   .then(() => {
     return mongoose.disconnect()
