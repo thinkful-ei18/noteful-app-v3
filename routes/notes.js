@@ -9,12 +9,25 @@ const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/notes', (req, res, next) => {
-  const { searchTerm, folderId } = req.query;
+  const { searchTerm, folderId, tagId } = req.query;
 
   let filter = {};
+  /**
+   * Use RegEx ($regex) Operator to find documents where title contain searchTerm
+   *  title : {$regex: re}
+   * 
+   * BONUS CHALLENGE - Search both title and content using $OR Operator
+   *   filter.$or = [{ 'title': { $regex: re } }, { 'content': { $regex: re } }];
+  */
+  
+  /* if (searchTerm) {
+    const re = new RegExp(searchTerm, 'i');
+    filter.title = { $regex: re };
+  } */
+
   let projection = {};
   let sort = 'created'; // default sorting
-  
+
   // if querying by searchTerm, then add to filter
   if (searchTerm) {
     filter.$text = { $search: searchTerm };
@@ -27,10 +40,15 @@ router.get('/notes', (req, res, next) => {
     filter.folderId = folderId;
   }
 
+  // if querying by tags, then add to filter
+  if (tagId) {
+    filter.tags = tagId;
+  }
+
   Note.find(filter, projection)
-    .select('title content created folderId')
+    .select('title content created folderId tags')
+    .populate('tags')
     .sort(sort)
-    // .populate('folderId')
     .then(results => {
       res.json(results);
     })
@@ -48,8 +66,8 @@ router.get('/notes/:id', (req, res, next) => {
   }
 
   Note.findById(id)
-    .select('title content created folderId')
-    // .populate('folderId')
+    .select('title content created folderId tags')
+    .populate('tags')
     .then(result => {
       if (result) {
         res.json(result);
@@ -62,16 +80,16 @@ router.get('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const { title, content, folderId } = req.body;
-  
+  const { title, content, folderId, tags } = req.body;
+
   /***** Never trust users - validate input *****/
   if (!title) {
     const err = new Error('Missing `title` in request body');
     err.status = 400;
     return next(err);
   }
-  
-  const newItem = { title, content, folderId };
+
+  const newItem = { title, content, tags };
 
   Note.create(newItem)
     .then(result => {
@@ -83,7 +101,7 @@ router.post('/notes', (req, res, next) => {
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
   const { id } = req.params;
-  const { title, content, folderId } = req.body;
+  const { title, content, folderId, tags } = req.body;
 
   /***** Never trust users - validate input *****/
   if (!title) {
@@ -98,11 +116,17 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateItem = { title, content, folderId };
+  const updateItem = { title, content, tags };
+  
+  if (mongoose.Types.ObjectId.isValid(folderId)) {
+    updateItem.folderId = folderId;
+  }
+
   const options = { new: true };
 
   Note.findByIdAndUpdate(id, updateItem, options)
-    .select('id title content folderId')
+    .select('id title content folderId tags')
+    .populate('tags')
     .then(result => {
       if (result) {
         res.json(result);

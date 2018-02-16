@@ -5,12 +5,12 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 
-const Folder = require('../models/folder');
+const Tag = require('../models/tag');
 const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
-router.get('/folders', (req, res, next) => {
-  Folder.find()
+router.get('/tags', (req, res, next) => {
+  Tag.find()
     .sort('name')
     .then(results => {
       res.json(results);
@@ -19,7 +19,7 @@ router.get('/folders', (req, res, next) => {
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/folders/:id', (req, res, next) => {
+router.get('/tags/:id', (req, res, next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -28,7 +28,7 @@ router.get('/folders/:id', (req, res, next) => {
     return next(err);
   }
 
-  Folder.findById(id)
+  Tag.findById(id)
     .then(result => {
       if (result) {
         res.json(result);
@@ -40,10 +40,10 @@ router.get('/folders/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/folders', (req, res, next) => {
+router.post('/tags', (req, res, next) => {
   const { name } = req.body;
 
-  const newFolder = { name };
+  const newTag = { name };
 
   /***** Never trust users - validate input *****/
   if (!name) {
@@ -52,7 +52,8 @@ router.post('/folders', (req, res, next) => {
     return next(err);
   }
 
-  Folder.create(newFolder)
+  Tag.create(newTag)
+
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
@@ -66,7 +67,7 @@ router.post('/folders', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/folders/:id', (req, res, next) => {
+router.put('/tags/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -83,9 +84,9 @@ router.put('/folders/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateFolder = { name };
+  const updateTag = { name };
 
-  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
+  Tag.findByIdAndUpdate(id, updateTag, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -103,14 +104,16 @@ router.put('/folders/:id', (req, res, next) => {
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/folders/:id', (req, res, next) => {
+router.delete('/tags/:id', (req, res, next) => {
   const { id } = req.params;
+  const tagRemovePromise = Tag.remove({ _id: id }); // NOTE **underscore** _id
 
-  // Manual "cascading" delete to ensure integrity
-  const folderRemovePromise = Folder.findByIdAndRemove(id); 
-  const noteRemovePromise = Note.deleteMany({ folderId: id });
+  // find all notes that contain the tag, and  $pull the tag from the tags array
+  const noteUpdatePromise = Note.updateMany({ 'tags': id, },
+    { '$pull': { 'tags': id } }
+  );
 
-  Promise.all([folderRemovePromise, noteRemovePromise])
+  Promise.all([tagRemovePromise, noteUpdatePromise])
     .then(resultsArray => {
       const folderResult = resultsArray[0];
 
