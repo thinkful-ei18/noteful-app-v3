@@ -32,5 +32,4 @@ noteSchema.set('toObject', {
  * The callback parameter is made available for backwards compatability
 */
 
-
 module.exports = mongoose.model('Note', noteSchema);

@@ -53,13 +53,12 @@ router.post('/tags', (req, res, next) => {
   }
 
   Tag.create(newTag)
-
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('The tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -94,9 +93,9 @@ router.put('/tags/:id', (req, res, next) => {
         next();
       }
     })
-    .catch(err => {
+    .catch(err => {      
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('The tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -106,24 +105,24 @@ router.put('/tags/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/tags/:id', (req, res, next) => {
   const { id } = req.params;
-  const tagRemovePromise = Tag.remove({ _id: id }); // NOTE **underscore** _id
+  const tagRemovePromise = Tag.findByIdAndRemove(id);
+  // const tagRemovePromise = Tag.remove({ _id: id }); // NOTE **underscore** _id
 
-  // find all notes that contain the tag, and  $pull the tag from the tags array
-  const noteUpdatePromise = Note.updateMany({ 'tags': id, },
+  const noteUpdatePromise = Note.updateMany(
+    { 'tags': id, },
     { '$pull': { 'tags': id } }
   );
 
   Promise.all([tagRemovePromise, noteUpdatePromise])
-    .then(resultsArray => {
-      const folderResult = resultsArray[0];
-
-      if (folderResult) {
+    .then(([tagResult]) => {
+      if (tagResult) {
         res.status(204).end();
       } else {
         next();
       }
     })
     .catch(next);
+
 });
 
 module.exports = router;

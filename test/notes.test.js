@@ -20,7 +20,8 @@ chai.use(chaiSpies);
 
 describe('Noteful API - Notes', function () {
   before(function () {
-    return mongoose.connect(TEST_MONGODB_URI);
+    return mongoose.connect(TEST_MONGODB_URI)
+      .then(() => mongoose.connection.db.dropDatabase());
   });
 
   beforeEach(function () {
@@ -31,7 +32,8 @@ describe('Noteful API - Notes', function () {
   });
 
   afterEach(function () {
-    return mongoose.connection.db.dropDatabase();
+    return mongoose.connection.db.dropDatabase()
+      .catch(err => console.error(err));
   });
 
   after(function () {
@@ -65,7 +67,7 @@ describe('Noteful API - Notes', function () {
           expect(res.body).to.have.length(data.length);
           res.body.forEach(function (item) {
             expect(item).to.be.a('object');
-            expect(item).to.have.keys('id', 'title', 'content', 'created', 'folderId');
+            expect(item).to.include.keys('id', 'title', 'content', 'created');
           });
         });
     });
@@ -135,7 +137,7 @@ describe('Noteful API - Notes', function () {
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'title', 'content', 'created', 'folderId');
+          expect(res.body).to.include.keys('id', 'title', 'content', 'created', 'folderId', 'tags');
 
           expect(res.body.id).to.equal(data.id);
           expect(res.body.title).to.equal(data.title);

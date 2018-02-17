@@ -43,7 +43,7 @@ router.get('/folders/:id', (req, res, next) => {
 router.post('/folders', (req, res, next) => {
   const { name } = req.body;
 
-  const newFolder = { name };
+  const newItem = { name };
 
   /***** Never trust users - validate input *****/
   if (!name) {
@@ -52,7 +52,7 @@ router.post('/folders', (req, res, next) => {
     return next(err);
   }
 
-  Folder.create(newFolder)
+  Folder.create(newItem)
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
@@ -83,9 +83,9 @@ router.put('/folders/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateFolder = { name };
+  const updateItem = { name };
 
-  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
+  Folder.findByIdAndUpdate(id, updateItem, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -106,9 +106,14 @@ router.put('/folders/:id', (req, res, next) => {
 router.delete('/folders/:id', (req, res, next) => {
   const { id } = req.params;
 
-  // Manual "cascading" delete to ensure integrity
   const folderRemovePromise = Folder.findByIdAndRemove(id); 
-  const noteRemovePromise = Note.deleteMany({ folderId: id });
+
+  const noteRemovePromise = Note.updateMany(
+    { 'tags': id, },
+    { '$pull': { 'tags': id } }
+  );
+
+  // const noteRemovePromise = Note.deleteMany({ folderId: id });
 
   Promise.all([folderRemovePromise, noteRemovePromise])
     .then(resultsArray => {
