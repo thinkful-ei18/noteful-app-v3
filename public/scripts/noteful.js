@@ -355,8 +355,7 @@ const noteful = (function () {
 
       const signupForm = $(event.currentTarget);
       const newUser = {
-        firstname: signupForm.find('.js-firstname-entry').val(),
-        lastname: signupForm.find('.js-lastname-entry').val(),
+        fullname: signupForm.find('.js-fullname-entry').val(),
         username: signupForm.find('.js-username-entry').val(),
         password: signupForm.find('.js-password-entry').val()
       };
@@ -364,11 +363,11 @@ const noteful = (function () {
       api.create('/v3/users', newUser)
         .then(response => {
           signupForm[0].reset();
-          showSuccessMessage(`Thank you, ${response.firstname || response.username} for signing up!`);
+          showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up!`);
           return api.create('/api/login', newUser);
         })
         .then(response => {
-          showSuccessMessage(`Welcome, ${response.firstname || response.username}!`);
+          showSuccessMessage(`Welcome, ${response.fullname || response.username}!`);
         })
         .catch(err => {
           showFailureMessage(err.responseJSON.message);
@@ -388,8 +387,12 @@ const noteful = (function () {
 
       api.create('/v3/login', loginUser)
         .then(response => {
+          store.authToken = response.authToken;
           loginForm[0].reset();
-          showSuccessMessage(`Welcome back, ${response.firstname || response.username}!`);
+          
+          const payload = JSON.parse(atob(response.authToken.split('.')[1]));
+          store.currentUser = payload.user;
+          showSuccessMessage(`Welcome back, ${store.currentUser.fullname || store.currentUser.username }`);
         })
         .catch(err => {
           showFailureMessage(err.responseJSON.message);

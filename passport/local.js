@@ -17,7 +17,6 @@ const localStrategy = new LocalStrategy((username, password, done) => {
           location: 'username'
         });
       }
-
       return user.validatePassword(password);
     })
     .then(isValid => {
@@ -34,9 +33,7 @@ const localStrategy = new LocalStrategy((username, password, done) => {
       if (err.reason === 'LoginError') {
         return done(null, false);
       }
-
       return done(err);
-
     });
 });
 

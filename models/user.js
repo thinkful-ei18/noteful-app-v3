@@ -5,8 +5,7 @@ const mongoose = require('mongoose');
 
 // ===== Define UserSchema & UserModel =====
 const UserSchema = new mongoose.Schema({
-  firstname: { type: String, default: '' },
-  lastname: { type: String, default: '' },
+  fullname: { type: String, default: '' },
   username: {
     type: String,
     required: true,
@@ -25,6 +24,21 @@ UserSchema.set('toObject', {
     delete ret.__v;
     delete ret.password;
   }
+});
+
+UserSchema.pre('save', function (next) {
+  const doc = this;
+  
+  if (!doc.isModified('password')) {
+    return next();
+  }
+
+  bcrypt.hash(doc.password, 10)
+    .then(digest => {
+      doc.password = digest;  
+      next();
+    })
+    .catch(next);
 });
 
 UserSchema.methods.validatePassword = function (password) {

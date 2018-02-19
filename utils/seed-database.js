@@ -6,19 +6,22 @@ const { MONGODB_URI } = require('../config');
 const Note = require('../models/note');
 const Folder = require('../models/folder');
 const Tag = require('../models/tag');
+const User = require('../models/user');
 
 const seedNotes = require('../db/seed/notes');
 const seedFolders = require('../db/seed/folders');
 const seedTags = require('../db/seed/tags');
+const seedUsers = require('../db/seed/users');
 
 mongoose.connect(MONGODB_URI)
   .then(() => mongoose.connection.db.dropDatabase())
   .then(() => {
     return Promise.all([
-      Note.insertMany(seedNotes),
+      Note.create(seedNotes),
       Note.createIndexes(), // trigger text indexing for $search
-      Folder.insertMany(seedFolders),
-      Tag.insertMany(seedTags),
+      Folder.create(seedFolders),
+      Tag.create(seedTags),
+      User.create(seedUsers), // calls pre save middleware to hash password
     ]);
   })
   .then(() => mongoose.disconnect())

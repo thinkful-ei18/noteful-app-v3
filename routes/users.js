@@ -17,7 +17,7 @@ router.post('/users', (req, res, next) => {
     return next(err);
   }
 
-  const stringFields = ['username', 'password', 'firstname', 'lastname'];
+  const stringFields = ['username', 'password', 'fullname'];
   const nonStringField = stringFields.find(
     field => field in req.body && typeof req.body[field] !== 'string'
   );
@@ -41,7 +41,7 @@ router.post('/users', (req, res, next) => {
   );
 
   if (nonTrimmedField) {
-    const err = new Error(`Field:'${nonTrimmedField}' cannot start or end with whitespace`);
+    const err = new Error(`Field: '${nonTrimmedField}' cannot start or end with whitespace`);
     err.status = 422;
     return next(err);
   }
@@ -59,7 +59,7 @@ router.post('/users', (req, res, next) => {
   );
   if (tooSmallField) {
     const min = sizedFields[tooSmallField].min;
-    const err = new Error(`Field:'${tooSmallField}' must be at least ${min} characters long`);
+    const err = new Error(`Field: '${tooSmallField}' must be at least ${min} characters long`);
     err.status = 422;
     return next(err);
   }
@@ -71,26 +71,19 @@ router.post('/users', (req, res, next) => {
 
   if (tooLargeField) {
     const max = sizedFields[tooLargeField].max;
-    const err = new Error(`Field:'${tooSmallField}' must be at most ${max} characters long`);
+    const err = new Error(`Field: '${tooSmallField}' must be at most ${max} characters long`);
     err.status = 422;
     return next(err);
   }
 
   // Username and password were validated as pre-trimmed
-  let { username, password, firstname = '', lastname = '' } = req.body;
-  firstname = firstname.trim();
-  lastname = lastname.trim();
+  let { username, password, fullname = '' } = req.body;
+  fullname = fullname.trim();
 
-  return User.hashPassword(password)
-    .then(digest => {
-      const newUser = {
-        username,
-        password: digest,
-        firstname,
-        lastname
-      };
-      return User.create(newUser);
-    })
+  const newUser = { username, password, fullname };
+
+  // calls pre save middleware to hash password
+  return User.create(newUser)
     .then(result => {
       return res.status(201).location(`/api/users/${result.id}`).json(result);
     })
