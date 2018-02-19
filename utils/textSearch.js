@@ -11,7 +11,7 @@ mongoose.connect(MONGODB_URI)
     return Note.find({ $text: { $search: 'ways' } },{ score: { $meta: 'textScore' } })
       .sort({ score: { $meta: 'textScore' } })
       .then(results => {
-        console.log(results);
+        console.info(results);
       });
   })
   .then(() => {

@@ -3,6 +3,18 @@
 
 const noteful = (function () {
 
+  function showSuccessMessage(message) {
+    const el = $('.js-success-message');
+    el.text(message).show();
+    setTimeout(() => el.fadeOut('slow'), 3000);
+  }
+
+  function showFailureMessage(message) {
+    const el = $('.js-error-message');
+    el.text(message).show();
+    setTimeout(() => el.fadeOut('slow'), 3000);
+  }
+
   function render() {
     const notesList = generateNotesList(store.notes, store.currentNote);
     $('.js-notes-list').html(notesList);
@@ -234,10 +246,12 @@ const noteful = (function () {
         .then(() => {
           $('.js-new-folder-entry').val();
           return api.search('/v3/folders');
-        }).then(response => {
+        })
+        .then(response => {
           store.folders = response;
           render();
-        }).catch(err => {
+        })
+        .catch(err => {
           $('.js-error-message').text(err.responseJSON.message);
         });
     });
@@ -298,7 +312,8 @@ const noteful = (function () {
       api.create('/v3/tags', { name: newTagName })
         .then(() => {
           return api.search('/v3/tags');
-        }).then(response => {
+        })
+        .then(response => {
           store.tags = response;
           render();
         })
@@ -317,7 +332,6 @@ const noteful = (function () {
         store.currentQuery.tagId = null;
       }
 
-      //TODO; loop over tags, if not a match, then clear
       store.currentNote = {};
 
       api.remove(`/v3/tags/${tagId}`)
@@ -331,6 +345,54 @@ const noteful = (function () {
         .then(response => {
           store.notes = response;
           render();
+        });
+    });
+  }
+
+  function handleSignupSubmit() {
+    $('.js-signup-from').on('submit', event => {
+      event.preventDefault();
+
+      const signupForm = $(event.currentTarget);
+      const newUser = {
+        firstname: signupForm.find('.js-firstname-entry').val(),
+        lastname: signupForm.find('.js-lastname-entry').val(),
+        username: signupForm.find('.js-username-entry').val(),
+        password: signupForm.find('.js-password-entry').val()
+      };
+
+      api.create('/v3/users', newUser)
+        .then(response => {
+          signupForm[0].reset();
+          showSuccessMessage(`Thank you, ${response.firstname || response.username} for signing up!`);
+          return api.create('/api/login', newUser);
+        })
+        .then(response => {
+          showSuccessMessage(`Welcome, ${response.firstname || response.username}!`);
+        })
+        .catch(err => {
+          showFailureMessage(err.responseJSON.message);
+        });
+    });
+  }
+
+  function handleLoginSubmit() {
+    $('.js-login-form').on('submit', event => {
+      event.preventDefault();
+
+      const loginForm = $(event.currentTarget);
+      const loginUser = {
+        username: loginForm.find('.js-username-entry').val(),
+        password: loginForm.find('.js-password-entry').val()
+      };
+
+      api.create('/v3/login', loginUser)
+        .then(response => {
+          loginForm[0].reset();
+          showSuccessMessage(`Welcome back, ${response.firstname || response.username}!`);
+        })
+        .catch(err => {
+          showFailureMessage(err.responseJSON.message);
         });
     });
   }
@@ -349,6 +411,9 @@ const noteful = (function () {
     handleTagClick();
     handleNewTagSubmit();
     handleTagDeleteClick();
+
+    handleSignupSubmit();
+    handleLoginSubmit();
   }
 
   // This object contains the only exposed methods from this module:
