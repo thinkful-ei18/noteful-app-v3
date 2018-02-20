@@ -1,6 +1,5 @@
 'use strict';
 
-require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
@@ -29,13 +28,12 @@ app.use(express.static('public'));
 // Utilize the Express `.json()` body parser
 app.use(express.json());
 
-app.use('/v3', usersRouter);
-app.use('/v3', authRouter);
-
 // Utilize the given `strategy`
 passport.use(localStrategy);
 
 // Mount routers
+app.use('/v3', usersRouter);
+app.use('/v3', authRouter);
 app.use('/v3', notesRouter);
 app.use('/v3', foldersRouter);
 app.use('/v3', tagsRouter);
