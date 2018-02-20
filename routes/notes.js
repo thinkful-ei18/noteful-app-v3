@@ -89,7 +89,7 @@ router.post('/notes', (req, res, next) => {
     return next(err);
   }
 
-  const newItem = { title, content, tags };
+  const newItem = { title, content, folderId, tags };
 
   Note.create(newItem)
     .then(result => {

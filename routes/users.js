@@ -80,12 +80,18 @@ router.post('/users', (req, res, next) => {
   let { username, password, fullname = '' } = req.body;
   fullname = fullname.trim();
 
-  const newUser = { username, password, fullname };
-
-  // calls pre save middleware to hash password
-  return User.create(newUser)
+  // Remove explicit hashPassword if using pre-save middleware
+  return User.hashPassword(password)
+    .then(digest => {
+      const newUser = {
+        username,
+        password: digest,
+        fullname
+      };
+      return User.create(newUser);
+    })
     .then(result => {
-      return res.status(201).location(`/api/users/${result.id}`).json(result);
+      return res.status(201).location(`/v3/users/${result.id}`).json(result);
     })
     .catch(err => {
       if (err.code === 11000) {

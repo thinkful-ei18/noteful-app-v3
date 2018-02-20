@@ -378,11 +378,7 @@ const noteful = (function () {
       api.create('/v3/users', newUser)
         .then(response => {
           signupForm[0].reset();
-          // showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up!`);
-          return api.create('/api/login', newUser);
-        })
-        .then(response => {
-          showSuccessMessage(`Welcome, ${response.fullname || response.username}!`);
+          showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up! Please login.`);
         })
         .catch(handleErrors);
     });
