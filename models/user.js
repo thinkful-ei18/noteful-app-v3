@@ -26,20 +26,20 @@ UserSchema.set('toObject', {
   }
 });
 
-UserSchema.pre('save', function (next) {
-  const doc = this;
+// UserSchema.pre('save', function (next) {
+//   const doc = this;
   
-  if (!doc.isModified('password')) {
-    return next();
-  }
+//   if (!doc.isModified('password')) {
+//     return next();
+//   }
 
-  bcrypt.hash(doc.password, 10)
-    .then(digest => {
-      doc.password = digest;  
-      next();
-    })
-    .catch(next);
-});
+//   bcrypt.hash(doc.password, 10)
+//     .then(digest => {
+//       doc.password = digest;  
+//       next();
+//     })
+//     .catch(next);
+// });
 
 UserSchema.methods.validatePassword = function (password) {
   return bcrypt.compare(password, this.password);

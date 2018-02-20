@@ -8,7 +8,6 @@ const passport = require('passport');
 
 const { PORT, MONGODB_URI } = require('./config');
 const localStrategy = require('./passport/local');
-const jwtStrategy = require('./passport/jwt');
 
 const notesRouter = require('./routes/notes');
 const foldersRouter = require('./routes/folders');
@@ -35,10 +34,6 @@ app.use('/v3', authRouter);
 
 // Utilize the given `strategy`
 passport.use(localStrategy);
-passport.use(jwtStrategy);
-
-const jwtAuth = passport.authenticate('jwt', { session: false, failWithError: true });
-app.use(jwtAuth);
 
 // Mount routers
 app.use('/v3', notesRouter);

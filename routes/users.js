@@ -82,8 +82,16 @@ router.post('/users', (req, res, next) => {
 
   const newUser = { username, password, fullname };
 
-  // calls pre save middleware to hash password
-  return User.create(newUser)
+  // Remove explicit hashPassword if using pre-save middleware
+  return User.hashPassword(password)
+    .then(digest => {
+      const newUser = {
+        username,
+        password: digest,
+        fullname
+      };
+      return User.create(newUser);
+    })  
     .then(result => {
       return res.status(201).location(`/api/users/${result.id}`).json(result);
     })

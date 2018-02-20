@@ -378,11 +378,7 @@ const noteful = (function () {
       api.create('/v3/users', newUser)
         .then(response => {
           signupForm[0].reset();
-          // showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up!`);
-          return api.create('/api/login', newUser);
-        })
-        .then(response => {
-          showSuccessMessage(`Welcome, ${response.fullname || response.username}!`);
+          showSuccessMessage(`Thank you, ${response.fullname || response.username} for signing up!`);
         })
         .catch(handleErrors);
     });
@@ -400,12 +396,10 @@ const noteful = (function () {
 
       api.create('/v3/login', loginUser)
         .then(response => {
-          store.authToken = response.authToken;
           store.authorized = true;
           loginForm[0].reset();
 
-          const payload = JSON.parse(atob(response.authToken.split('.')[1]));
-          store.currentUser = payload.user;
+          store.currentUser = response;
 
           return Promise.all([
             api.search('/v3/notes'),

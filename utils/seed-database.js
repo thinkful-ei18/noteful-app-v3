@@ -16,12 +16,14 @@ const seedUsers = require('../db/seed/users');
 mongoose.connect(MONGODB_URI)
   .then(() => mongoose.connection.db.dropDatabase())
   .then(() => {
+    
+
     return Promise.all([
-      Note.create(seedNotes),
+      Note.insertMany(seedNotes),
       Note.createIndexes(), // trigger text indexing for $search
-      Folder.create(seedFolders),
-      Tag.create(seedTags),
-      User.create(seedUsers), // calls pre save middleware to hash password
+      Folder.insertMany(seedFolders),
+      Tag.insertMany(seedTags),
+      // User.create(seedUsers), // calls pre save middleware to hash password
     ]);
   })
   .then(() => mongoose.disconnect())
