@@ -1,4 +1,4 @@
-/* global $ store */
+/* global $ store noteful */
 'use strict';
 
 const api = (function () {
