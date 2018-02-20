@@ -4,21 +4,15 @@
 $(document).ready(function () {
   noteful.bindEventListeners();
 
-  api.search('/v3/notes')
-    .then(response => {
-      store.notes = response;
-      noteful.render();
-    });
-
-  api.search('/v3/folders')
-    .then(response => {
-      store.folders = response;
-      noteful.render();
-    });
-
-  api.search('/v3/tags')
-    .then(response => {
-      store.tags = response;
+  Promise.all([
+    api.search('/v3/notes'),
+    api.search('/v3/folders'),
+    api.search('/v3/tags')
+  ])
+    .then(([notes, folders, tags]) => {
+      store.notes = notes;
+      store.folders = folders;
+      store.tags = tags;
       noteful.render();
     });
 
