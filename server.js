@@ -16,6 +16,10 @@ const tagsRouter = require('./routes/tags');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 
+// Utilize the given `strategy`
+passport.use(localStrategy);
+passport.use(jwtStrategy);
+
 // Create an Express application
 const app = express();
 
@@ -30,17 +34,14 @@ app.use(express.static('public'));
 // Utilize the Express `.json()` body parser
 app.use(express.json());
 
+// Mount unprotected routers
 app.use('/v3', usersRouter);
 app.use('/v3', authRouter);
 
-// Utilize the given `strategy`
-passport.use(localStrategy);
-passport.use(jwtStrategy);
+// Protect endpoints using JWT Strategy
+app.use(passport.authenticate('jwt', { session: false, failWithError: true }));
 
-const jwtAuth = passport.authenticate('jwt', { session: false, failWithError: true });
-app.use(jwtAuth);
-
-// Mount routers
+// Mount **protected** routers
 app.use('/v3', notesRouter);
 app.use('/v3', foldersRouter);
 app.use('/v3', tagsRouter);
