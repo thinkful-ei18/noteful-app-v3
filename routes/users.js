@@ -89,7 +89,7 @@ router.post('/users', (req, res, next) => {
         fullname
       };
       return User.create(newUser);
-    })
+    })  
     .then(result => {
       return res.status(201).location(`/v3/users/${result.id}`).json(result);
     })
