@@ -10,11 +10,5 @@
     "fullname": "User One",
     "username": "user1",
     "password": "password1"
-  },
-  {
-    "_id": "333333333333333333333302",
-    "fullname": "User Two",
-    "username": "user2",
-    "password": "password2"
   }
 ]
