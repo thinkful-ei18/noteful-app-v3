@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 
 // ===== Define UserSchema & UserModel =====
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   fullname: { type: String, default: '' },
   username: {
     type: String,
@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-UserSchema.set('toObject', {
+userSchema.set('toObject', {
   transform: function (doc, ret) {
     ret.id = ret._id;
     delete ret._id;
@@ -26,7 +26,7 @@ UserSchema.set('toObject', {
   }
 });
 
-// UserSchema.pre('save', function (next) {
+// userSchema.pre('save', function (next) {
 //   const doc = this;
   
 //   if (!doc.isModified('password')) {
@@ -41,12 +41,12 @@ UserSchema.set('toObject', {
 //     .catch(next);
 // });
 
-UserSchema.methods.validatePassword = function (password) {
+userSchema.methods.validatePassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-UserSchema.statics.hashPassword = function (password) {
+userSchema.statics.hashPassword = function (password) {
   return bcrypt.hash(password, 10);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', userSchema);
