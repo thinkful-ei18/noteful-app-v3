@@ -35,7 +35,7 @@ router.get('/folders/:id', (req, res, next) => {
     return next(err);
   }
 
-  Note.findOne({ _id: id, userId })
+  Folder.findOne({ _id: id, userId })
     .then(result => {
       if (result) {
         res.json(result);
