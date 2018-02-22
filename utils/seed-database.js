@@ -24,9 +24,15 @@ mongoose.connect(MONGODB_URI)
     return Promise.all([
       Note.insertMany(seedNotes),
       Note.createIndexes(), // trigger text indexing for $search
+
       Folder.insertMany(seedFolders),
+      Folder.createIndexes(), // trigger text indexing for $search
+
       Tag.insertMany(seedTags),
+      Tag.createIndexes(), // trigger text indexing for $search
+      
       User.insertMany(seedUsers),
+      User.createIndexes(), // trigger text indexing for $search
     ]);
   })
   .then(() => mongoose.disconnect())
