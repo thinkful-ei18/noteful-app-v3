@@ -5,11 +5,37 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 
 const Note = require('../models/note');
+const Folder = require('../models/folder');
+const Tag = require('../models/tag');
 
 const router = express.Router();
 
 // Protect endpoints using JWT Strategy
 router.use('/notes', passport.authenticate('jwt', { session: false, failWithError: true }));
+
+function validateFolderId(userId, folderId) {
+  if (!folderId) {
+    return Promise.resolve();
+  }
+  return Folder.findOne({ _id: folderId, userId })
+    .then(result => {
+      if (!result) {
+        return Promise.reject('InvalidFolder');
+      }
+    });
+}
+
+function validateTagIds(userId, tags = []) {
+  if (!tags.length) {
+    return Promise.resolve();
+  }
+  return Tag.find({ $and: [{ _id: { $in: tags }, userId }] })
+    .then(results => {
+      if (tags.length !== results.length) {
+        return Promise.reject('InvalidTag');
+      }
+    });
+}
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/notes', (req, res, next) => {
@@ -97,12 +123,33 @@ router.post('/notes', (req, res, next) => {
   }
 
   const newItem = { title, content, folderId, tags, userId };
+  const valFolderIdProm = validateFolderId(userId, folderId);
+  const valTagIdsProm = validateTagIds(userId, tags);
 
-  Note.create(newItem)
+  Promise.all([valFolderIdProm, valTagIdsProm])
+    .then(() => Note.create(newItem))
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
-    .catch(next);
+    .catch(err => {
+      if (err === 'InvalidFolder') {
+        err = new Error('The folder is not valid');
+        err.status = 400;
+      }
+      if (err === 'InvalidTag') {
+        err = new Error('The tag is not valid');
+        err.status = 400;
+      }
+      console.log(err);
+
+      next(err);
+    });
+
+  // Note.create(newItem)
+  // .then(result => {
+  //   res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
+  // })
+  // .catch(next);
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
@@ -124,7 +171,7 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateItem = { title, content, tags, userId };
+  const updateItem = { title, content, tags, userId, folderId };
 
   if (mongoose.Types.ObjectId.isValid(folderId)) {
     updateItem.folderId = folderId;
@@ -132,9 +179,14 @@ router.put('/notes/:id', (req, res, next) => {
 
   const options = { new: true };
 
-  Note.findByIdAndUpdate(id, updateItem, options)
-    .select('id title content folderId tags')
-    .populate('tags')
+  const valFolderIdProm = validateFolderId(userId, folderId);
+  const valTagIdsProm = validateTagIds(userId, tags);
+
+  Promise.all([valFolderIdProm, valTagIdsProm])
+    .then(() => Note.findByIdAndUpdate(id, updateItem, options)
+      .select('id title content folderId tags')
+      .populate('tags')
+    )
     .then(result => {
       if (result) {
         res.json(result);
@@ -142,7 +194,31 @@ router.put('/notes/:id', (req, res, next) => {
         next();
       }
     })
-    .catch(next);
+    .catch(err => {
+      if (err === 'InvalidFolder') {
+        err = new Error('The folder is not valid');
+        err.status = 400;
+      }
+      if (err === 'InvalidTag') {
+        err = new Error('The tag is not valid');
+        err.status = 400;
+      }
+      console.log(err);
+
+      next(err);
+    });
+
+  // Note.findByIdAndUpdate(id, updateItem, options)
+  //   .select('id title content folderId tags')
+  //   .populate('tags')
+  //   .then(result => {
+  //     if (result) {
+  //       res.json(result);
+  //     } else {
+  //       next();
+  //     }
+  //   })
+  //   .catch(next);
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */

@@ -174,7 +174,7 @@ const noteful = (function () {
         id: store.currentNote.id,
         title: editForm.find('.js-note-title-entry').val(),
         content: editForm.find('.js-note-content-entry').val(),
-        folderId: editForm.find('.js-note-folder-entry').val(),
+        folderId: editForm.find('.js-note-folder-entry').val() || undefined,
         tags: editForm.find('.js-note-tags-entry').val()
       };
 
@@ -258,10 +258,10 @@ const noteful = (function () {
     $('.js-new-folder-form').on('submit', event => {
       event.preventDefault();
 
-      const newFolderName = $('.js-new-folder-entry').val();
-      api.create('/v3/folders', { name: newFolderName })
+      const newFolderEl = $('.js-new-folder-entry');
+      api.create('/v3/folders', { name: newFolderEl.val() })
         .then(() => {
-          $('.js-new-folder-entry').val();
+          newFolderEl.val('');
           return api.search('/v3/folders');
         })
         .then(response => {
@@ -324,9 +324,11 @@ const noteful = (function () {
     $('.js-new-tag-form').on('submit', event => {
       event.preventDefault();
 
-      const newTagName = $('.js-new-tag-entry').val();
-      api.create('/v3/tags', { name: newTagName })
+      const newTagEl = $('.js-new-tag-entry');
+
+      api.create('/v3/tags', { name: newTagEl.val() })
         .then(() => {
+          newTagEl.val('');
           return api.search('/v3/tags');
         })
         .then(response => {
@@ -414,7 +416,7 @@ const noteful = (function () {
         })
         .catch(handleErrors);
     });
-  }  
+  }
 
   function bindEventListeners() {
     handleNoteItemClick();
