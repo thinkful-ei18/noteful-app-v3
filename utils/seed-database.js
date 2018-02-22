@@ -1,6 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const { MONGODB_URI } = require('../config');
 const Note = require('../models/note');
@@ -16,12 +17,16 @@ const seedUsers = require('../db/seed/users');
 mongoose.connect(MONGODB_URI)
   .then(() => mongoose.connection.db.dropDatabase())
   .then(() => {
+    return Promise.all(seedUsers.map( user => bcrypt.hash(user.password, 10)));
+  })
+  .then( digests => {
+    seedUsers.forEach((user, i) => user.password = digests[i]);
     return Promise.all([
       Note.insertMany(seedNotes),
       Note.createIndexes(), // trigger text indexing for $search
       Folder.insertMany(seedFolders),
       Tag.insertMany(seedTags),
-      User.create(seedUsers), // calls pre save middleware to hash password
+      User.insertMany(seedUsers),
     ]);
   })
   .then(() => mongoose.disconnect())
