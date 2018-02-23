@@ -140,8 +140,6 @@ router.post('/notes', (req, res, next) => {
         err = new Error('The tag is not valid');
         err.status = 400;
       }
-      console.log(err);
-
       next(err);
     });
 
