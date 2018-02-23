@@ -107,13 +107,12 @@ router.delete('/folders/:id', (req, res, next) => {
   const { id } = req.params;
 
   const folderRemovePromise = Folder.findByIdAndRemove(id); 
+  // const noteRemovePromise = Note.deleteMany({ folderId: id });
 
   const noteRemovePromise = Note.updateMany(
-    { 'tags': id, },
-    { '$pull': { 'tags': id } }
+    { folderId: id },
+    { '$unset': { 'folderId': '' } }
   );
-
-  // const noteRemovePromise = Note.deleteMany({ folderId: id });
 
   Promise.all([folderRemovePromise, noteRemovePromise])
     .then(resultsArray => {
